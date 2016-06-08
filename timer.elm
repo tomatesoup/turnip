@@ -21,19 +21,20 @@ main =
 type alias Model =
   { startTime: Time
   , elapsedTime: Time
-  , running: Bool
+  , isRunning: Bool
   }
 
 init : (Model, Cmd Msg)
 init =
-  ({ startTime = -3600000, elapsedTime = -3600000, running = False }, Cmd.none)
+  ({ startTime = -3600000, elapsedTime = -3600000, isRunning = False }, Cmd.none)
 
 -- update
 
 type Msg
   = Tick Time
-  | StartTimer
+  | ToggleTimer
   | ReceiveTime Time
+  | Reset
 
 onError error =
   error
@@ -45,16 +46,22 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Tick newTime ->
-      if model.running then
-          ({ model | elapsedTime = (newTime - model.startTime - 3600000) }, Cmd.none)
+      if model.isRunning then
+          ({ model | elapsedTime = (newTime - model.startTime) }, Cmd.none)
         else
           (model, Cmd.none)
 
-    StartTimer -> -- Time.now is an unpredictable ("impure") function and is wrapped in a Task, like a Promise in JS
-      (model, Task.perform onError onSuccess Time.now)
+    ToggleTimer ->
+      if model.isRunning then
+        ({ model | isRunning = False }, Cmd.none)
+      else
+        (model, Task.perform onError onSuccess Time.now) -- Time.now is an unpredictable ("impure") function and is wrapped in a Task, like a Promise in JS
 
     ReceiveTime time ->
-      ({ model | startTime = time, running = True}, Cmd.none)
+      ({ model | startTime = time - model.elapsedTime, isRunning = True }, Cmd.none)
+
+    Reset ->
+      ({ model | startTime = -3600000, elapsedTime = -3600000, isRunning = False }, Cmd.none)
 
 -- subscriptions
 
@@ -71,7 +78,8 @@ view model =
     currentDate = Date.fromTime model.elapsedTime
   in
     div []
-      [ div [] [ text "00:00:00" ]
-      , div [] [ text ( format config "%H:%M:%S" currentDate ) ]
-      , button [ onClick StartTimer ] [ text "start" ]
+      [ div [] [ text ( format config "%H:%M:%S" currentDate ) ]
+      , button [ onClick ToggleTimer ] [ text "start" ]
+      , button [ onClick ToggleTimer ] [ text "pause/resume" ]
+      , button [ onClick Reset ] [ text "reset" ]
       ]
