@@ -1,13 +1,16 @@
+module Tasklist exposing (Model, Msg, init, update, view)
+
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
 import Html.App as Html
 
 main =
-  Html.beginnerProgram
-    { model = model
-    , update = update
+  Html.program
+    { init = init
     , view = view
+    , update = update
+    , subscriptions = subscriptions
     }
 
 --model
@@ -17,10 +20,9 @@ type alias Model =
   , tasks: List String
   }
 
-model =
-  { task = ""
-  , tasks = []
-  }
+init : (Model, Cmd Msg)
+init =
+  ({ task = "", tasks = [] }, Cmd.none)
 
 --update
 
@@ -29,18 +31,23 @@ type Msg
   | AddItem
   | RemoveItem String
 
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     UpdateText text ->
-      { model | task = text }
+      ({ model | task = text }, Cmd.none)
 
     AddItem ->
-      { model | task = "", tasks = model.task :: model.tasks }
+      ({ model | task = "", tasks = model.task :: model.tasks }, Cmd.none)
 
     RemoveItem task ->
-      { model |
-        tasks =
-          List.filter (\t -> t /= task) model.tasks }
+      ({ model | tasks = List.filter (\t -> t /= task) model.tasks }, Cmd.none)
+
+-- subscriptions
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Sub.none
 
 --view
 
@@ -55,6 +62,8 @@ tasksList tasks =
     children = List.map taskItem tasks
   in
     ul [] children
+
+view : Model -> Html Msg
 
 view model =
   div []

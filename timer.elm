@@ -1,3 +1,5 @@
+module Timer exposing (Model, Msg, init, update, subscriptions, view, getTime)
+
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Time exposing (Time, second)
@@ -19,9 +21,9 @@ main =
 -- model
 
 type alias Model =
-  { startTime: Time
-  , elapsedTime: Time
-  , isRunning: Bool
+  { startTime : Time
+  , elapsedTime : Time
+  , isRunning : Bool
   }
 
 init : (Model, Cmd Msg)
@@ -35,6 +37,10 @@ type Msg
   | ToggleTimer
   | ReceiveTime Time
   | Reset
+
+getTime : Model -> Float
+getTime model =
+  model.elapsedTime
 
 onError error =
   error
