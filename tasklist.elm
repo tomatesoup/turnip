@@ -4,6 +4,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onClick)
 import Html.App as Html
+import Time exposing (Time)
 
 main =
   Html.program
@@ -15,14 +16,19 @@ main =
 
 --model
 
+type alias Task =
+  { description: String
+  , duration: Time
+  }
+
 type alias Model =
-  { task: String
-  , tasks: List String
+  { input: String
+  , tasks: List Task
   }
 
 init : (Model, Cmd Msg)
 init =
-  ({ task = "", tasks = [] }, Cmd.none)
+  ({ input = "", tasks = [] }, Cmd.none)
 
 --update
 
@@ -35,13 +41,18 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     UpdateText text ->
-      ({ model | task = text }, Cmd.none)
+      ({ model | input = text }, Cmd.none)
 
     AddItem ->
-      ({ model | task = "", tasks = model.task :: model.tasks }, Cmd.none)
+      let
+        newTask = { description = model.input , duration = 0 }
+      in
+        ({ model | input = "", tasks = newTask :: model.tasks }, Cmd.none)
 
     RemoveItem task ->
-      ({ model | tasks = List.filter (\t -> t /= task) model.tasks }, Cmd.none)
+      -- Right now li's are targeted by their descr, so if two (or more) have the same descr,
+      -- they will all be removed. Must add unique ID's to task items in the future.
+      ({ model | tasks = List.filter (\t -> t.description /= task) model.tasks }, Cmd.none)
 
 -- subscriptions
 
@@ -53,8 +64,8 @@ subscriptions model =
 
 taskItem task =
   li []
-    [ text task
-    , button [ onClick (RemoveItem task) ] [text "X"]
+    [ text task.description
+    , button [ onClick (RemoveItem task.description) ] [text "X"]
     ]
 
 tasksList tasks =
@@ -70,7 +81,7 @@ view model =
     [ h1 [] [ text "Task List" ]
     ,input [ type' "text"
             , onInput UpdateText
-            , value model.task
+            , value model.input
             ] []
     , button [ onClick AddItem ] [ text "Add task" ]
     , tasksList model.tasks
